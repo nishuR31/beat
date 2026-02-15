@@ -1,4 +1,13 @@
-export type VisualizationStyle = 'bars' | 'circle' | 'waveform' | 'phonk' | 'spiral';
+export type VisualizationStyle =
+  | "bars"
+  | "circle"
+  | "waveform"
+  | "phonk"
+  | "spiral"
+  | "classicEq"
+  | "spectrum"
+  | "dotMatrix"
+  | "waveGrid";
 
 export interface VisualizationContext {
   canvas: HTMLCanvasElement;
@@ -11,6 +20,131 @@ export interface VisualizationContext {
   beatGlow: number;
   particles: Particle[];
   mirrorEffect: boolean;
+  logo?: string | null;
+  backgroundPalette?: string;
+}
+// Helper: Get palette colors by name
+const paletteColors: Record<string, string[]> = {
+  Vaporwave: ["#ff8ae2", "#8afff7", "#fff685", "#ffb86b"],
+  Cyberpunk: ["#ff005c", "#00fff7", "#fffd37", "#ff00ea"],
+  Sunset: ["#ff6e7f", "#bfe9ff", "#f9d423", "#ff4e50"],
+  Aurora: ["#00c3ff", "#ffff1c", "#ff61a6", "#a200ff"],
+  Mono: ["#22223b", "#4a4e69", "#9a8c98", "#c9ada7"],
+};
+
+function drawBackground(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  paletteName?: string,
+) {
+  const colors =
+    paletteColors[paletteName || "Vaporwave"] || paletteColors["Vaporwave"];
+  const grad = ctx.createLinearGradient(0, 0, width, height);
+  colors.forEach((c, i) => grad.addColorStop(i / (colors.length - 1), c));
+  ctx.save();
+  ctx.globalAlpha = 0.7;
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, width, height);
+  ctx.restore();
+}
+
+function drawLogo(
+  ctx: CanvasRenderingContext2D,
+  logo: string | null,
+  width: number,
+  height: number,
+) {
+  if (!logo) return;
+  const img = new window.Image();
+  img.src = logo;
+  img.onload = () => {
+    ctx.save();
+    ctx.globalAlpha = 0.95;
+    ctx.drawImage(img, 16, 16, width * 0.12, width * 0.12);
+    ctx.restore();
+  };
+}
+// Classic Equalizer (vertical bars, retro style)
+export function drawClassicEq(context: VisualizationContext) {
+  const { ctx, dataArray, width, height, backgroundPalette } = context;
+  drawBackground(ctx, width, height, backgroundPalette);
+  const barCount = 24;
+  const barWidth = width / barCount;
+  for (let i = 0; i < barCount; i++) {
+    const idx = Math.floor((i / barCount) * dataArray.length);
+    const value = dataArray[idx] / 255;
+    const barHeight = value * height * 0.8;
+    ctx.fillStyle = paletteColors[backgroundPalette || "Vaporwave"][i % 4];
+    ctx.fillRect(i * barWidth, height - barHeight, barWidth * 0.7, barHeight);
+  }
+}
+
+// Spectrum Analyzer (horizontal lines)
+export function drawSpectrum(context: VisualizationContext) {
+  const { ctx, dataArray, width, height, backgroundPalette } = context;
+  drawBackground(ctx, width, height, backgroundPalette);
+  ctx.lineWidth = 2;
+  for (let i = 0; i < dataArray.length; i += 4) {
+    const value = dataArray[i] / 255;
+    ctx.strokeStyle = paletteColors[backgroundPalette || "Vaporwave"][i % 4];
+    ctx.beginPath();
+    ctx.moveTo(0, height - value * height);
+    ctx.lineTo(width, height - value * height);
+    ctx.stroke();
+  }
+}
+
+// Dot Matrix (grid of circles)
+export function drawDotMatrix(context: VisualizationContext) {
+  const { ctx, dataArray, width, height, backgroundPalette } = context;
+  drawBackground(ctx, width, height, backgroundPalette);
+  const cols = 16,
+    rows = 8;
+  const dotW = width / cols,
+    dotH = height / rows;
+  for (let x = 0; x < cols; x++) {
+    for (let y = 0; y < rows; y++) {
+      const idx = Math.floor(
+        ((x + y * cols) / (cols * rows)) * dataArray.length,
+      );
+      const value = dataArray[idx] / 255;
+      ctx.beginPath();
+      ctx.arc(
+        x * dotW + dotW / 2,
+        y * dotH + dotH / 2,
+        6 + value * 12,
+        0,
+        Math.PI * 2,
+      );
+      ctx.fillStyle = paletteColors[backgroundPalette || "Vaporwave"][y % 4];
+      ctx.globalAlpha = 0.7 + value * 0.3;
+      ctx.fill();
+    }
+  }
+  ctx.globalAlpha = 1;
+}
+
+// Wave Grid (multiple waveforms)
+export function drawWaveGrid(context: VisualizationContext) {
+  const { ctx, dataArray, width, height, backgroundPalette } = context;
+  drawBackground(ctx, width, height, backgroundPalette);
+  const lines = 6;
+  for (let l = 0; l < lines; l++) {
+    ctx.beginPath();
+    for (let i = 0; i < dataArray.length; i++) {
+      const value = (dataArray[i] - 128) / 128;
+      const x = (i / dataArray.length) * width;
+      const y = (height / (lines + 1)) * (l + 1) + value * 30 * (l + 1);
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.strokeStyle = paletteColors[backgroundPalette || "Vaporwave"][l % 4];
+    ctx.lineWidth = 2 + l;
+    ctx.globalAlpha = 0.7;
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
 }
 
 export interface Particle {
@@ -92,8 +226,8 @@ export function drawWaveform(context: VisualizationContext) {
 
   ctx.strokeStyle = gradient;
   ctx.lineWidth = 3 + beatGlow * 2;
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
 
   ctx.beginPath();
 
@@ -153,7 +287,12 @@ export function drawPhonk(context: VisualizationContext) {
     ctx.shadowBlur = 30 + glowIntensity * 40;
     ctx.shadowColor = `rgba(255, 50, 100, ${0.6 + glowIntensity * 0.4})`;
 
-    ctx.fillRect(i * barWidth, height - finalHeight, barWidth * 0.9, finalHeight);
+    ctx.fillRect(
+      i * barWidth,
+      height - finalHeight,
+      barWidth * 0.9,
+      finalHeight,
+    );
   }
 
   ctx.shadowBlur = 0;
@@ -235,12 +374,12 @@ export function updateAndDrawParticles(context: VisualizationContext) {
 // Generate particles on beat
 export function generateBeatParticles(
   context: VisualizationContext,
-  count: number = 10
+  count: number = 10,
 ) {
   const { width, height, particles } = context;
 
   for (let i = 0; i < count; i++) {
-    const angle = (Math.random() * Math.PI * 2);
+    const angle = Math.random() * Math.PI * 2;
     const speed = 2 + Math.random() * 3;
 
     particles.push({

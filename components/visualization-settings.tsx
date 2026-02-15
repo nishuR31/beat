@@ -58,6 +58,18 @@ const styles: VisualizationStyle[] = [
   "waveform",
   "phonk",
   "spiral",
+  "classicEq",
+  "spectrum",
+  "dotMatrix",
+  "waveGrid",
+];
+
+const backgroundPalettes = [
+  { name: "Vaporwave", colors: ["#ff8ae2", "#8afff7", "#fff685", "#ffb86b"] },
+  { name: "Cyberpunk", colors: ["#ff005c", "#00fff7", "#fffd37", "#ff00ea"] },
+  { name: "Sunset", colors: ["#ff6e7f", "#bfe9ff", "#f9d423", "#ff4e50"] },
+  { name: "Aurora", colors: ["#00c3ff", "#ffff1c", "#ff61a6", "#a200ff"] },
+  { name: "Mono", colors: ["#22223b", "#4a4e69", "#9a8c98", "#c9ada7"] },
 ];
 
 export function VisualizationSettings({
@@ -65,6 +77,8 @@ export function VisualizationSettings({
   onStyleChange,
   colorScheme,
   onColorSchemeChange,
+  customColor,
+  onCustomColorChange,
   beatGlowEnabled,
   onBeatGlowChange,
   particleEffectEnabled,
@@ -75,7 +89,81 @@ export function VisualizationSettings({
   onSensitivityChange,
   smoothing,
   onSmoothingChange,
-}: VisualizationSettingsProps) {
+  beatSyncMode,
+  onBeatSyncModeChange,
+  image,
+  onImageUpload,
+  autoColor,
+  onAutoColorChange,
+  fullscreen,
+  onFullscreenChange,
+  aspect,
+  onAspectChange,
+  rotation,
+  onRotationChange,
+  filter,
+  onFilterChange,
+  logo,
+  onLogoUpload,
+  backgroundPalette,
+  onBackgroundPaletteChange,
+}: VisualizationSettingsProps & {
+  logo: string | null;
+  onLogoUpload: (img: string) => void;
+  backgroundPalette: string;
+  onBackgroundPaletteChange: (palette: string) => void;
+}) {
+  {
+    /* Logo Upload */
+  }
+  <div className="space-y-2">
+    <label className="text-sm font-semibold text-white flex items-center gap-2">
+      <ImageIcon className="w-4 h-4" /> Logo Image
+    </label>
+    <input
+      type="file"
+      accept="image/*"
+      onChange={(e) => {
+        const file = e.target.files?.[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            if (ev.target?.result) onLogoUpload(ev.target.result as string);
+          };
+          reader.readAsDataURL(file);
+        }
+      }}
+    />
+    {logo && (
+      <img
+        src={logo}
+        alt="Logo"
+        className="w-16 h-16 object-contain rounded-lg mt-2 bg-white/10"
+      />
+    )}
+  </div>;
+  {
+    /* Background Palette Selector */
+  }
+  <div className="space-y-2">
+    <label className="text-sm font-semibold text-white flex items-center gap-2">
+      <Palette className="w-4 h-4" /> Background Palette
+    </label>
+    <div className="flex flex-wrap gap-2">
+      {backgroundPalettes.map((p) => (
+        <button
+          key={p.name}
+          onClick={() => onBackgroundPaletteChange(p.name)}
+          className={`rounded-lg px-3 py-2 text-xs font-medium ${backgroundPalette === p.name ? "ring-2 ring-white" : "ring-1 ring-gray-600"} flex items-center gap-1`}
+          style={{
+            background: `linear-gradient(90deg, ${p.colors.join(", ")})`,
+          }}
+        >
+          {p.name}
+        </button>
+      ))}
+    </div>
+  </div>;
   const fileInputRef = useRef<HTMLInputElement>(null);
   return (
     <div className="space-y-4">
@@ -159,9 +247,13 @@ export function VisualizationSettings({
           value={aspect}
           onChange={(e) => onAspectChange(e.target.value)}
         >
-          <option value="16/9">16:9</option>
+          <option value="16/9">16:9 (YouTube)</option>
+          <option value="9/16">9:16 (TikTok/Reels)</option>
+          <option value="1/1">1:1 (Instagram Square)</option>
+          <option value="4/5">4:5 (Instagram Portrait)</option>
+          <option value="5/4">5:4</option>
+          <option value="2/3">2:3</option>
           <option value="4/3">4:3</option>
-          <option value="1/1">1:1</option>
           <option value="21/9">21:9</option>
         </select>
       </div>

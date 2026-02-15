@@ -18,6 +18,8 @@ interface AudioCanvasProps {
   smoothing: number;
   customColor?: string;
   image?: string | null;
+  logo?: string | null;
+  backgroundPalette?: string;
 }
 
 export function AudioCanvas({
@@ -33,6 +35,8 @@ export function AudioCanvas({
   smoothing,
   customColor,
   image,
+  logo,
+  backgroundPalette,
 }: AudioCanvasProps) {
   useVisualization(canvasRef, {
     analyser,
@@ -46,6 +50,8 @@ export function AudioCanvas({
     smoothing,
     customColor,
     image,
+    logo,
+    backgroundPalette,
   });
 
   // Handle canvas resize
@@ -53,16 +59,24 @@ export function AudioCanvas({
     const canvas = canvasRef.current;
     if (!canvas) return;
 
+    let prevWidth = 0;
+    let prevHeight = 0;
+
     const handleResize = () => {
       const rect = canvas.getBoundingClientRect();
       const dpr = window.devicePixelRatio || 1;
-
-      canvas.width = rect.width * dpr;
-      canvas.height = rect.height * dpr;
-
-      const ctx = canvas.getContext("2d");
-      if (ctx) {
-        ctx.scale(dpr, dpr);
+      const newWidth = rect.width * dpr;
+      const newHeight = rect.height * dpr;
+      if (canvas.width !== newWidth || canvas.height !== newHeight) {
+        canvas.width = newWidth;
+        canvas.height = newHeight;
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset transform
+          ctx.scale(dpr, dpr);
+        }
+        prevWidth = newWidth;
+        prevHeight = newHeight;
       }
     };
 
