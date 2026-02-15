@@ -1,0 +1,92 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: "Geist", "Inter", Arial, Helvetica, sans-serif;
+  background: linear-gradient(
+    135deg,
+    #0a0014 0%,
+    #1a0022 40%,
+    #2d0036 80%,
+    #6c1aff 100%
+  );
+  min-height: 100vh;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  .glass {
+    background: rgba(20, 10, 40, 0.55);
+    box-shadow: 0 8px 32px 0 rgba(60, 0, 80, 0.37);
+    backdrop-filter: blur(18px) saturate(180%);
+    -webkit-backdrop-filter: blur(18px) saturate(180%);
+    border-radius: 18px;
+    border: 1.5px solid rgba(108, 26, 255, 0.18);
+  }
+  .purple-gradient {
+    background: linear-gradient(135deg, #1a0022 0%, #6c1aff 100%);
+  }
+  .purple-text {
+    background: linear-gradient(90deg, #a259ff, #6c1aff, #ff00cc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-fill-color: transparent;
+  }
+}
+
+@layer base {
+  :root {
+    --background: 265 80% 5%; /* deep black-purple */
+    --foreground: 285 100% 98%;
+    --card: 265 80% 8%;
+    --card-foreground: 285 100% 98%;
+    --popover: 265 80% 8%;
+    --popover-foreground: 285 100% 98%;
+    --primary: 270 100% 60%; /* purple */
+    --primary-foreground: 285 100% 98%;
+    --secondary: 265 80% 18%;
+    --secondary-foreground: 285 100% 98%;
+    --muted: 265 80% 12%;
+    --muted-foreground: 285 100% 80%;
+    --accent: 270 100% 60%;
+    --accent-foreground: 285 100% 98%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 270 100% 40%;
+    --input: 270 100% 40%;
+    --ring: 270 100% 60%;
+    --radius: 1rem;
+  }
+  .dark {
+    --background: 265 80% 5%;
+    --foreground: 285 100% 98%;
+    --card: 265 80% 8%;
+    --card-foreground: 285 100% 98%;
+    --popover: 265 80% 8%;
+    --popover-foreground: 285 100% 98%;
+    --primary: 270 100% 60%;
+    --primary-foreground: 285 100% 98%;
+    --secondary: 265 80% 18%;
+    --secondary-foreground: 285 100% 98%;
+    --muted: 265 80% 12%;
+    --muted-foreground: 285 100% 80%;
+    --accent: 270 100% 60%;
+    --accent-foreground: 285 100% 98%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 270 100% 40%;
+    --input: 270 100% 40%;
+    --ring: 270 100% 60%;
+    --radius: 1rem;
+  }
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}

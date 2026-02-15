@@ -1,0 +1,10 @@
+/* Add any required CSS for the Hyperspeed component here. If the original package provides a CSS file, copy its contents here. */
+#lights {
+  width: 100%;
+  height: 100vh;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  pointer-events: none;
+}
