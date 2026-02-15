@@ -29,17 +29,106 @@ export function VisualizerLayout() {
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
+  // Visualization settings state
   const [style, setStyle] = useState<VisualizationStyle>("bars");
   const [colorScheme, setColorScheme] = useState<ColorScheme>("neon");
+  const [customColor, setCustomColor] = useState("#ff00ff");
   const [beatGlowEnabled, setBeatGlowEnabled] = useState(true);
   const [particleEffectEnabled, setParticleEffectEnabled] = useState(true);
   const [mirrorEffect, setMirrorEffect] = useState(false);
   const [sensitivity, setSensitivity] = useState(0.5);
   const [smoothing, setSmoothing] = useState(0.8);
+  const [beatSyncMode, setBeatSyncMode] = useState("default");
+  const [image, setImage] = useState<string | null>(null);
+  const [autoColor, setAutoColor] = useState(false);
+  const [fullscreen, setFullscreen] = useState(false);
+  const [aspect, setAspect] = useState("16/9");
+  const [rotation, setRotation] = useState(0);
+  const [filter, setFilter] = useState("none");
+
+  // Image color extraction (auto color)
+  const handleImageUpload = (img: string) => {
+    setImage(img);
+    if (autoColor) {
+      // Extract dominant color (simple average, can be improved)
+      const imageEl = new window.Image();
+      imageEl.src = img;
+      imageEl.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = imageEl.width;
+        canvas.height = imageEl.height;
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.drawImage(imageEl, 0, 0);
+          const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+          let r = 0,
+            g = 0,
+            b = 0,
+            count = 0;
+          for (let i = 0; i < data.length; i += 4) {
+            r += data[i];
+            g += data[i + 1];
+            b += data[i + 2];
+            count++;
+          }
+          r = Math.round(r / count);
+          g = Math.round(g / count);
+          b = Math.round(b / count);
+          setCustomColor(
+            `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`,
+          );
+        }
+      };
+    }
+  };
+
+  // Fullscreen logic
+  useEffect(() => {
+    if (fullscreen && canvasRef.current) {
+      const el = canvasRef.current;
+      if (el.requestFullscreen) el.requestFullscreen();
+    }
+  }, [fullscreen]);
 
   const handleFileLoad = (file: File) => {
     loadAudio(file);
   };
+
+  // Aspect ratio style
+  const aspectStyle = useMemo(() => {
+    switch (aspect) {
+      case "4/3":
+        return { aspectRatio: "4 / 3" };
+      case "1/1":
+        return { aspectRatio: "1 / 1" };
+      case "21/9":
+        return { aspectRatio: "21 / 9" };
+      default:
+        return { aspectRatio: "16 / 9" };
+    }
+  }, [aspect]);
+
+  // Filter style
+  const filterStyle = useMemo(() => {
+    switch (filter) {
+      case "blur":
+        return { filter: "blur(4px)" };
+      case "grayscale":
+        return { filter: "grayscale(1)" };
+      case "invert":
+        return { filter: "invert(1)" };
+      case "sepia":
+        return { filter: "sepia(1)" };
+      default:
+        return {};
+    }
+  }, [filter]);
+
+  // Rotation style
+  const rotationStyle = useMemo(
+    () => ({ transform: `rotate(${rotation}deg)` }),
+    [rotation],
+  );
 
   return (
     <div className="min-h-screen flex flex-col bg-transparent">
@@ -67,7 +156,10 @@ export function VisualizerLayout() {
         <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Canvas Area */}
           <div className="lg:col-span-3 flex items-center justify-center">
-            <div className="glass w-full h-full p-2 flex items-center justify-center shadow-2xl">
+            <div
+              className="glass w-full h-full p-2 flex items-center justify-center shadow-2xl"
+              style={{ ...aspectStyle, ...filterStyle, ...rotationStyle }}
+            >
               <AudioCanvas
                 canvasRef={canvasRef}
                 analyser={analyser}
@@ -79,6 +171,8 @@ export function VisualizerLayout() {
                 mirrorEffect={mirrorEffect}
                 sensitivity={sensitivity}
                 smoothing={smoothing}
+                customColor={customColor}
+                image={image}
               />
             </div>
           </div>
@@ -114,6 +208,8 @@ export function VisualizerLayout() {
                 onStyleChange={setStyle}
                 colorScheme={colorScheme}
                 onColorSchemeChange={setColorScheme}
+                customColor={customColor}
+                onCustomColorChange={setCustomColor}
                 beatGlowEnabled={beatGlowEnabled}
                 onBeatGlowChange={setBeatGlowEnabled}
                 particleEffectEnabled={particleEffectEnabled}
@@ -124,6 +220,20 @@ export function VisualizerLayout() {
                 onSensitivityChange={setSensitivity}
                 smoothing={smoothing}
                 onSmoothingChange={setSmoothing}
+                beatSyncMode={beatSyncMode}
+                onBeatSyncModeChange={setBeatSyncMode}
+                image={image}
+                onImageUpload={handleImageUpload}
+                autoColor={autoColor}
+                onAutoColorChange={setAutoColor}
+                fullscreen={fullscreen}
+                onFullscreenChange={setFullscreen}
+                aspect={aspect}
+                onAspectChange={setAspect}
+                rotation={rotation}
+                onRotationChange={setRotation}
+                filter={filter}
+                onFilterChange={setFilter}
               />
             </div>
 

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback } from "react";
 import {
   VisualizationStyle,
   VisualizationContext,
@@ -10,9 +10,9 @@ import {
   drawSpiral,
   updateAndDrawParticles,
   generateBeatParticles,
-} from '@/lib/visualization-styles';
-import { ColorScheme, createGradient } from '@/lib/color-schemes';
-import { BeatDetector } from '@/lib/beat-detection';
+} from "@/lib/visualization-styles";
+import { ColorScheme, createGradient } from "@/lib/color-schemes";
+import { BeatDetector } from "@/lib/beat-detection";
 
 interface UseVisualizationOptions {
   analyser: AnalyserNode | null;
@@ -24,11 +24,19 @@ interface UseVisualizationOptions {
   mirrorEffect: boolean;
   sensitivity: number;
   smoothing: number;
+  customColor?: string;
+  image?: string | null;
+  beatSyncMode?: string;
+  filter?: string;
+  rotation?: number;
+  aspect?: string;
+  autoColor?: boolean;
+  fullscreen?: boolean;
 }
 
 export function useVisualization(
   canvasRef: React.RefObject<HTMLCanvasElement>,
-  options: UseVisualizationOptions
+  options: UseVisualizationOptions,
 ) {
   const {
     analyser,
@@ -40,6 +48,14 @@ export function useVisualization(
     mirrorEffect,
     sensitivity,
     smoothing,
+    customColor,
+    image,
+    beatSyncMode,
+    filter,
+    rotation,
+    aspect,
+    autoColor,
+    fullscreen,
   } = options;
 
   const animationIdRef = useRef<number | null>(null);
@@ -77,7 +93,7 @@ export function useVisualization(
     const canvas = canvasRef.current;
     if (!canvas || !analyser || !dataArray) return;
 
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
     const animate = () => {
@@ -89,12 +105,13 @@ export function useVisualization(
         for (let i = 0; i < dataArray.length; i++) {
           const smoothFactor = smoothing;
           smoothedDataRef.current[i] =
-            smoothedDataRef.current[i] * smoothFactor + dataArray[i] * (1 - smoothFactor);
+            smoothedDataRef.current[i] * smoothFactor +
+            dataArray[i] * (1 - smoothFactor);
         }
       }
 
       // Clear canvas with fade effect
-      ctx.fillStyle = 'rgba(5, 5, 15, 0.15)';
+      ctx.fillStyle = "rgba(5, 5, 15, 0.15)";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       // Beat detection
@@ -105,7 +122,10 @@ export function useVisualization(
           beatGlowRef.current = 1;
           setIsBeat(true);
           if (particleEffectEnabled) {
-            generateBeatParticles({ particles: particlesRef.current } as any, 15);
+            generateBeatParticles(
+              { particles: particlesRef.current } as any,
+              15,
+            );
           }
           setTimeout(() => setIsBeat(false), 100);
         }
@@ -115,7 +135,13 @@ export function useVisualization(
       beatGlowRef.current *= 0.95;
 
       // Create gradient
-      const gradient = createGradient(ctx, colorScheme, canvas.width, canvas.height, 'vertical');
+      const gradient = createGradient(
+        ctx,
+        colorScheme,
+        canvas.width,
+        canvas.height,
+        "vertical",
+      );
 
       // Create visualization context
       const vizContext: VisualizationContext = {
@@ -132,20 +158,21 @@ export function useVisualization(
       };
 
       // Draw based on style
+      // TODO: Use customColor, image, beatSyncMode, filter, rotation, aspect, autoColor, fullscreen for advanced rendering
       switch (style) {
-        case 'bars':
+        case "bars":
           drawBars(vizContext);
           break;
-        case 'circle':
+        case "circle":
           drawCircle(vizContext);
           break;
-        case 'waveform':
+        case "waveform":
           drawWaveform(vizContext);
           break;
-        case 'phonk':
+        case "phonk":
           drawPhonk(vizContext);
           break;
-        case 'spiral':
+        case "spiral":
           drawSpiral(vizContext);
           break;
       }
@@ -156,21 +183,21 @@ export function useVisualization(
       }
 
       // Mirror effect
-      if (mirrorEffect && style !== 'spiral') {
+      if (mirrorEffect && style !== "spiral") {
         ctx.globalAlpha = 0.3;
         ctx.scale(1, -1);
         ctx.translate(0, -canvas.height);
         switch (style) {
-          case 'bars':
+          case "bars":
             drawBars(vizContext);
             break;
-          case 'circle':
+          case "circle":
             drawCircle(vizContext);
             break;
-          case 'waveform':
+          case "waveform":
             drawWaveform(vizContext);
             break;
-          case 'phonk':
+          case "phonk":
             drawPhonk(vizContext);
             break;
         }
@@ -189,7 +216,16 @@ export function useVisualization(
         cancelAnimationFrame(animationIdRef.current);
       }
     };
-  }, [analyser, dataArray, style, colorScheme, beatGlowEnabled, particleEffectEnabled, mirrorEffect, smoothing]);
+  }, [
+    analyser,
+    dataArray,
+    style,
+    colorScheme,
+    beatGlowEnabled,
+    particleEffectEnabled,
+    mirrorEffect,
+    smoothing,
+  ]);
 
   return { isBeat };
 }

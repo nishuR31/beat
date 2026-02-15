@@ -16,6 +16,8 @@ interface AudioCanvasProps {
   mirrorEffect: boolean;
   sensitivity: number;
   smoothing: number;
+  customColor?: string;
+  image?: string | null;
 }
 
 export function AudioCanvas({
@@ -29,6 +31,8 @@ export function AudioCanvas({
   mirrorEffect,
   sensitivity,
   smoothing,
+  customColor,
+  image,
 }: AudioCanvasProps) {
   useVisualization(canvasRef, {
     analyser,
@@ -40,6 +44,8 @@ export function AudioCanvas({
     mirrorEffect,
     sensitivity,
     smoothing,
+    customColor,
+    image,
   });
 
   // Handle canvas resize
