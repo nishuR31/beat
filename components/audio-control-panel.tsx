@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useState, useRef, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Slider } from '@/components/ui/slider';
-import { Play, Pause, RotateCcw, Upload, Volume2, Zap } from 'lucide-react';
+import { useState, useRef } from "react";
+import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
+import { Play, Pause, RotateCcw, Upload, Volume2, Zap } from "lucide-react";
 
 interface AudioControlPanelProps {
   onFileLoad: (file: File) => void;
@@ -62,14 +62,18 @@ export function AudioControlPanel({
   const formatTime = (time: number) => {
     const minutes = Math.floor(time / 60);
     const seconds = Math.floor(time % 60);
-    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
   };
 
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        <label className="text-sm font-semibold text-white">Audio File</label>
+        <label for="audioInput" className="text-sm font-semibold text-white">
+          Audio File
+        </label>
         <input
+          id="audioFile"
+          label="audio file"
           ref={fileInputRef}
           type="file"
           accept="audio/*"
@@ -81,7 +85,7 @@ export function AudioControlPanel({
           className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white"
         >
           <Upload className="w-4 h-4 mr-2" />
-          {fileName ? fileName.substring(0, 20) : 'Upload Audio'}
+          {fileName ? fileName.substring(0, 20) : "Upload Audio"}
         </Button>
       </div>
 
@@ -91,8 +95,10 @@ export function AudioControlPanel({
           disabled={!fileName}
           className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white disabled:opacity-50"
         >
-          {playing ? <Pause className="w-4 h-4 mr-2" /> : <Play className="w-4 h-4 mr-2" />}
-          {playing ? 'Pause' : 'Play'}
+          {playing ?
+            <Pause className="w-4 h-4 mr-2" />
+          : <Play className="w-4 h-4 mr-2" />}
+          {playing ? "Pause" : "Play"}
         </Button>
         <Button
           onClick={onStop}
@@ -144,7 +150,9 @@ export function AudioControlPanel({
               <Zap className="w-4 h-4" />
               Playback Speed
             </label>
-            <span className="text-xs text-gray-400">{playbackRate.toFixed(2)}x</span>
+            <span className="text-xs text-gray-400">
+              {playbackRate.toFixed(2)}x
+            </span>
           </div>
           <Slider
             value={[playbackRate]}

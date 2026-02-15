@@ -1,7 +1,6 @@
-import { useState, useRef, useMemo } from "react";
-("use client");
+"use client";
 
-import { useState, useRef, useMemo, useEffect } from "react";
+import { useState, useRef, useMemo } from "react";
 import { useAudioContext } from "@/hooks/useAudioContext";
 import { VisualizationStyle } from "@/lib/visualization-styles";
 import { ColorScheme } from "@/lib/color-schemes";

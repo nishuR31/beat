@@ -1,16 +1,7 @@
-import { useEffect, useRef } from "react";
-import * as THREE from "three";
-import {
-  BloomEffect,
-  EffectComposer,
-  EffectPass,
-  RenderPass,
-  SMAAEffect,
-  SMAAPreset,
-} from "postprocessing";
+
 import "./Hyperspeed.css";
 
-function Hyperspeed({ effectOptions }) {
+function Hyperspeed({ effectOptions }:any) {
   // TODO: Insert the full Hyperspeed implementation here.
   // Only render the effect container, no placeholder text.
   return (

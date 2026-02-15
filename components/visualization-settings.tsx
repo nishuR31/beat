@@ -4,20 +4,14 @@ import { VisualizationStyle } from "@/lib/visualization-styles";
 import { ColorScheme, allColorSchemes } from "@/lib/color-schemes";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Palette } from "lucide-react";
-
-import { useRef } from "react";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { AspectRatio } from "@/components/ui/aspect-ratio";
-import {
-  Fullscreen,
+import { Sparkles, Palette,  Fullscreen,
   Image as ImageIcon,
   RotateCw,
-  SlidersHorizontal,
-  Filter,
-  Eye,
-} from "lucide-react";
+  Filter } from "lucide-react";
+
+import { useRef } from "react";
+import { Switch } from "@/components/ui/switch";
+
 
 interface VisualizationSettingsProps {
   style: VisualizationStyle;
@@ -113,9 +107,9 @@ export function VisualizationSettings({
   backgroundPalette: string;
   onBackgroundPaletteChange: (palette: string) => void;
 }) {
-  {
-    /* Logo Upload */
-  }
+  // {
+  //   /* Logo Upload */
+  // }
   <div className="space-y-2">
     <label className="text-sm font-semibold text-white flex items-center gap-2">
       <ImageIcon className="w-4 h-4" /> Logo Image

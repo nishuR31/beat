@@ -11,12 +11,13 @@ export const metadata: Metadata = {
   description:
     "Create stunning real-time music visualizations with beat detection, multiple animation styles, and WebM video export. Powered by Web Audio API and Canvas.",
   generator: "v0.app",
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
-  },
+};
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({
