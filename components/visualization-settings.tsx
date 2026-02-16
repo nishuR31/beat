@@ -4,14 +4,16 @@ import { VisualizationStyle } from "@/lib/visualization-styles";
 import { ColorScheme, allColorSchemes } from "@/lib/color-schemes";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Palette,  Fullscreen,
+import {
+  Sparkles,
+  Palette,
+  Fullscreen,
   Image as ImageIcon,
   RotateCw,
-  Filter } from "lucide-react";
-
+  Filter,
+} from "lucide-react";
 import { useRef } from "react";
 import { Switch } from "@/components/ui/switch";
-
 
 interface VisualizationSettingsProps {
   style: VisualizationStyle;
@@ -44,6 +46,10 @@ interface VisualizationSettingsProps {
   onRotationChange: (value: number) => void;
   filter: string;
   onFilterChange: (filter: string) => void;
+  logo: string | null;
+  onLogoUpload: (img: string) => void;
+  backgroundPalette: string;
+  onBackgroundPaletteChange: (palette: string) => void;
 }
 
 const styles: VisualizationStyle[] = [
@@ -101,71 +107,82 @@ export function VisualizationSettings({
   onLogoUpload,
   backgroundPalette,
   onBackgroundPaletteChange,
-}: VisualizationSettingsProps & {
-  logo: string | null;
-  onLogoUpload: (img: string) => void;
-  backgroundPalette: string;
-  onBackgroundPaletteChange: (palette: string) => void;
-}) {
-  // {
-  //   /* Logo Upload */
-  // }
-  <div className="space-y-2">
-    <label className="text-sm font-semibold text-white flex items-center gap-2">
-      <ImageIcon className="w-4 h-4" /> Logo Image
-    </label>
-    <input
-      type="file"
-      accept="image/*"
-      onChange={(e) => {
-        const file = e.target.files?.[0];
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = (ev) => {
-            if (ev.target?.result) onLogoUpload(ev.target.result as string);
-          };
-          reader.readAsDataURL(file);
-        }
-      }}
-    />
-    {logo && (
-      <img
-        src={logo}
-        alt="Logo"
-        className="w-16 h-16 object-contain rounded-lg mt-2 bg-white/10"
-      />
-    )}
-  </div>;
-  {
-    /* Background Palette Selector */
-  }
-  <div className="space-y-2">
-    <label className="text-sm font-semibold text-white flex items-center gap-2">
-      <Palette className="w-4 h-4" /> Background Palette
-    </label>
-    <div className="flex flex-wrap gap-2">
-      {backgroundPalettes.map((p) => (
-        <button
-          key={p.name}
-          onClick={() => onBackgroundPaletteChange(p.name)}
-          className={`rounded-lg px-3 py-2 text-xs font-medium ${backgroundPalette === p.name ? "ring-2 ring-white" : "ring-1 ring-gray-600"} flex items-center gap-1`}
-          style={{
-            background: `linear-gradient(90deg, ${p.colors.join(", ")})`,
-          }}
-        >
-          {p.name}
-        </button>
-      ))}
-    </div>
-  </div>;
+}: VisualizationSettingsProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
+
   return (
     <div className="space-y-4">
+      {/* Logo Upload */}
+      <div className="space-y-2">
+        <label
+          htmlFor="logo"
+          className="flex items-center gap-2 text-sm font-semibold text-white"
+        >
+          <ImageIcon className="w-4 h-4" /> Logo Image
+        </label>
+        <input
+          title="logo"
+          id="logo"
+          ref={logoInputRef}
+          type="file"
+          accept="image/*"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) {
+              const reader = new FileReader();
+              reader.onload = (ev) => {
+                if (ev.target?.result) onLogoUpload(ev.target.result as string);
+              };
+              reader.readAsDataURL(file);
+            }
+          }}
+          className="hidden"
+        />
+        <button
+          className="w-full px-3 py-2 text-white rounded-lg bg-slate-800"
+          onClick={() => logoInputRef.current?.click()}
+        >
+          {logo ? "Change Logo" : "Upload Logo"}
+        </button>
+        {logo && (
+          <img
+            src={logo}
+            alt="Logo"
+            className="object-contain w-16 h-16 mt-2 rounded-lg bg-white/10"
+          />
+        )}
+      </div>
+      {/* Background Palette Selector */}
+      <div className="space-y-2">
+        <label className="flex items-center gap-2 text-sm font-semibold text-white">
+          <Palette className="w-4 h-4" /> Background Palette
+        </label>
+        <div className="flex flex-wrap gap-2">
+          {backgroundPalettes.map((p) => (
+            <button
+              key={p.name}
+              onClick={() => onBackgroundPaletteChange(p.name)}
+              className={`rounded-lg px-3 py-2 text-xs font-medium ${
+                backgroundPalette === p.name ?
+                  "ring-2 ring-white"
+                : "ring-1 ring-gray-600"
+              } flex items-center gap-1`}
+              style={{
+                background: `linear-gradient(90deg, ${p.colors.join(", ")})`,
+              }}
+            >
+              {p.name}
+            </button>
+          ))}
+        </div>
+      </div>
       {/* Beat Sync Options */}
       <div className="space-y-2">
         <label className="text-sm font-semibold text-white">Beat Sync</label>
         <select
-          className="w-full rounded-lg bg-slate-800 text-white p-2"
+        title="dropdown"
+          className="w-full p-2 text-white rounded-lg bg-slate-800"
           value={beatSyncMode}
           onChange={(e) => onBeatSyncModeChange(e.target.value)}
         >
@@ -177,19 +194,20 @@ export function VisualizationSettings({
       </div>
       {/* Custom Color Picker */}
       <div className="space-y-2">
-        <label className="text-sm font-semibold text-white flex items-center gap-2">
+        <label className="flex items-center gap-2 text-sm font-semibold text-white">
           🎨 Custom Color
         </label>
         <input
+        title="color"
           type="color"
           value={customColor}
           onChange={(e) => onCustomColorChange(e.target.value)}
-          className="w-12 h-8 p-0 border-none bg-transparent"
+          className="w-12 h-8 p-0 bg-transparent border-none"
         />
       </div>
       {/* Image Upload & Auto Color */}
       <div className="space-y-2">
-        <label className="text-sm font-semibold text-white flex items-center gap-2">
+        <label className="flex items-center gap-2 text-sm font-semibold text-white">
           <ImageIcon className="w-4 h-4" /> Image Upload
         </label>
         <input
@@ -210,7 +228,7 @@ export function VisualizationSettings({
           className="hidden"
         />
         <button
-          className="w-full py-2 px-3 rounded-lg bg-slate-800 text-white"
+          className="w-full px-3 py-2 text-white rounded-lg bg-slate-800"
           onClick={() => fileInputRef.current?.click()}
         >
           {image ? "Change Image" : "Upload Image"}
@@ -219,7 +237,7 @@ export function VisualizationSettings({
           <img
             src={image}
             alt="Uploaded"
-            className="w-full h-24 object-cover rounded-lg mt-2"
+            className="object-cover w-full h-24 mt-2 rounded-lg"
           />
         )}
         <div className="flex items-center gap-2 mt-2">
@@ -229,15 +247,16 @@ export function VisualizationSettings({
       </div>
       {/* Fullscreen & Aspect Ratio */}
       <div className="space-y-2">
-        <label className="text-sm font-semibold text-white flex items-center gap-2">
+        <label className="flex items-center gap-2 text-sm font-semibold text-white">
           <Fullscreen className="w-4 h-4" /> Fullscreen
         </label>
         <Switch checked={fullscreen} onCheckedChange={onFullscreenChange} />
-        <label className="text-sm font-semibold text-white flex items-center gap-2 mt-2">
+        <label className="flex items-center gap-2 mt-2 text-sm font-semibold text-white">
           Aspect Ratio
         </label>
         <select
-          className="w-full rounded-lg bg-slate-800 text-white p-2"
+        title="aspect ratio"
+          className="w-full p-2 text-white rounded-lg bg-slate-800"
           value={aspect}
           onChange={(e) => onAspectChange(e.target.value)}
         >
@@ -253,7 +272,7 @@ export function VisualizationSettings({
       </div>
       {/* Rotation, Effects, Filters */}
       <div className="space-y-2">
-        <label className="text-sm font-semibold text-white flex items-center gap-2">
+        <label className="flex items-center gap-2 text-sm font-semibold text-white">
           <RotateCw className="w-4 h-4" /> Rotation
         </label>
         <Slider
@@ -264,11 +283,12 @@ export function VisualizationSettings({
           onValueChange={(v) => onRotationChange(v[0])}
           className="w-full"
         />
-        <label className="text-sm font-semibold text-white flex items-center gap-2 mt-2">
+        <label className="flex items-center gap-2 mt-2 text-sm font-semibold text-white">
           <Filter className="w-4 h-4" /> Filter
         </label>
         <select
-          className="w-full rounded-lg bg-slate-800 text-white p-2"
+        title="filter"
+          className="w-full p-2 text-white rounded-lg bg-slate-800"
           value={filter}
           onChange={(e) => onFilterChange(e.target.value)}
         >
@@ -279,6 +299,7 @@ export function VisualizationSettings({
           <option value="sepia">Sepia</option>
         </select>
       </div>
+      {/* Visualization Style */}
       <div className="space-y-2">
         <label className="text-sm font-semibold text-white">
           Visualization Style
@@ -299,9 +320,9 @@ export function VisualizationSettings({
           ))}
         </div>
       </div>
-
+      {/* Color Scheme */}
       <div className="space-y-2">
-        <label className="text-sm font-semibold text-white flex items-center gap-2">
+        <label className="flex items-center gap-2 text-sm font-semibold text-white">
           <Palette className="w-4 h-4" />
           Color Scheme
         </label>
@@ -334,15 +355,14 @@ export function VisualizationSettings({
           ))}
         </div>
       </div>
-
+      {/* Effects */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <label className="text-sm font-semibold text-white flex items-center gap-2">
+          <label className="flex items-center gap-2 text-sm font-semibold text-white">
             <Sparkles className="w-4 h-4" />
             Effects
           </label>
         </div>
-
         <div className="space-y-2">
           <button
             onClick={() => onBeatGlowChange(!beatGlowEnabled)}
@@ -354,10 +374,9 @@ export function VisualizationSettings({
           >
             <span>Beat Glow</span>
             {beatGlowEnabled && (
-              <Badge className="bg-white text-black">ON</Badge>
+              <Badge className="text-black bg-white">ON</Badge>
             )}
           </button>
-
           <button
             onClick={() => onParticleEffectChange(!particleEffectEnabled)}
             className={`w-full py-2 px-3 rounded-lg text-sm font-medium transition-all flex items-center justify-between ${
@@ -368,10 +387,9 @@ export function VisualizationSettings({
           >
             <span>Particles</span>
             {particleEffectEnabled && (
-              <Badge className="bg-white text-black">ON</Badge>
+              <Badge className="text-black bg-white">ON</Badge>
             )}
           </button>
-
           <button
             onClick={() => onMirrorEffectChange(!mirrorEffect)}
             className={`w-full py-2 px-3 rounded-lg text-sm font-medium transition-all flex items-center justify-between ${
@@ -381,11 +399,11 @@ export function VisualizationSettings({
             }`}
           >
             <span>Mirror</span>
-            {mirrorEffect && <Badge className="bg-white text-black">ON</Badge>}
+            {mirrorEffect && <Badge className="text-black bg-white">ON</Badge>}
           </button>
         </div>
       </div>
-
+      {/* Beat Sensitivity & Smoothing */}
       <div className="space-y-3">
         <div className="space-y-2">
           <div className="flex items-center justify-between">
@@ -405,7 +423,6 @@ export function VisualizationSettings({
             className="w-full"
           />
         </div>
-
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <label className="text-sm font-semibold text-white">

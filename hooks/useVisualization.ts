@@ -38,6 +38,9 @@ export interface UseVisualizationOptions {
   fullscreen?: boolean;
   logo?: string | null;
   backgroundPalette?: string;
+  fps?: number;
+  customBackground?: string;
+  onBeat?: () => void;
 }
 
 export function useVisualization(
@@ -56,33 +59,33 @@ export function useVisualization(
     smoothing,
     logo,
     backgroundPalette,
+    fps = 60,
+    customBackground,
+    onBeat,
   } = options;
+
   const particlesRef = useRef<Particle[]>([]);
   const beatGlowRef = useRef(0);
   const smoothedDataRef = useRef<Uint8Array | null>(null);
-  // Use ref for transient beat state to avoid React re-renders
   const isBeatRef = useRef(false);
-
-  // Ref for BeatDetector instance
   const beatDetectorRef = useRef<BeatDetector | null>(null);
-
-  // Ref for animation frame id
   const animationIdRef = useRef<number | null>(null);
 
-  // Initialize beat detector
+  // Preload background and logo images for performance
+  const bgImgRef = useRef<HTMLImageElement | null>(null);
+  const logoImgRef = useRef<HTMLImageElement | null>(null);
+
   useEffect(() => {
     beatDetectorRef.current = new BeatDetector({
       sensitivity,
       frequencyRange: { start: 0, end: 20 },
       debounceTime: 100,
     });
-
     return () => {
       beatDetectorRef.current?.reset();
     };
   }, [sensitivity]);
 
-  // Initialize smoothed data array
   useEffect(() => {
     if (dataArray) {
       smoothedDataRef.current = new Uint8Array(dataArray.length);
@@ -92,7 +95,20 @@ export function useVisualization(
     }
   }, [dataArray]);
 
-  // Main animation loop
+  // Preload images
+  useEffect(() => {
+    if (customBackground && !customBackground.startsWith("#")) {
+      const img = new window.Image();
+      img.src = customBackground;
+      bgImgRef.current = img;
+    }
+    if (logo) {
+      const img = new window.Image();
+      img.src = logo;
+      logoImgRef.current = img;
+    }
+  }, [customBackground, logo]);
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || !analyser || !dataArray) return;
@@ -100,11 +116,19 @@ export function useVisualization(
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const animate = () => {
-      // Get frequency data
+    let lastFrame = 0;
+    const frameInterval = 1000 / fps;
+
+    const animate = (now = 0) => {
+      if (now - lastFrame < frameInterval) {
+        animationIdRef.current = requestAnimationFrame(animate);
+        return;
+      }
+      lastFrame = now;
+
       analyser.getByteFrequencyData(dataArray);
 
-      // Apply smoothing
+      // Smoothing
       if (smoothedDataRef.current) {
         for (let i = 0; i < dataArray.length; i++) {
           const smoothFactor = smoothing;
@@ -114,11 +138,30 @@ export function useVisualization(
         }
       }
 
-      // Clear canvas with fade effect
+      // Clear/fade canvas
+      ctx.save();
+      ctx.globalAlpha = 1;
       ctx.fillStyle = "rgba(5, 5, 15, 0.15)";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.restore();
 
-      // Beat detection (no React state update)
+      // Custom background
+      if (customBackground) {
+        if (customBackground.startsWith("#")) {
+          ctx.save();
+          ctx.globalAlpha = 1;
+          ctx.fillStyle = customBackground;
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.restore();
+        } else if (bgImgRef.current && bgImgRef.current.complete) {
+          ctx.save();
+          ctx.globalAlpha = 0.2;
+          ctx.drawImage(bgImgRef.current, 0, 0, canvas.width, canvas.height);
+          ctx.restore();
+        }
+      }
+
+      // Beat detection
       let beatDetected = false;
       if (beatDetectorRef.current) {
         beatDetected = beatDetectorRef.current.detectBeat(dataArray);
@@ -131,7 +174,7 @@ export function useVisualization(
               15,
             );
           }
-          // Reset isBeatRef after 100ms (throttled)
+          if (onBeat) onBeat();
           setTimeout(() => {
             isBeatRef.current = false;
           }, 100);
@@ -150,7 +193,7 @@ export function useVisualization(
         "vertical",
       );
 
-      // Create visualization context
+      // Visualization context
       const vizContext: VisualizationContext = {
         canvas,
         ctx,
@@ -166,7 +209,7 @@ export function useVisualization(
         backgroundPalette,
       };
 
-      // Draw based on style
+      // Draw visualizer
       switch (style) {
         case "bars":
           drawBars(vizContext);
@@ -197,26 +240,28 @@ export function useVisualization(
           break;
       }
 
-      // Draw logo (after main visualizer)
-      if (logo) {
-        // Use a static draw (not async) for best performance
-        const img = new globalThis.Image();
-        img.src = logo;
-        img.onload = () => {
-          ctx.save();
-          ctx.globalAlpha = 0.95;
-          ctx.drawImage(img, 16, 16, canvas.width * 0.12, canvas.width * 0.12);
-          ctx.restore();
-        };
+      // Draw logo
+      if (logo && logoImgRef.current && logoImgRef.current.complete) {
+        ctx.save();
+        ctx.globalAlpha = 0.95;
+        ctx.drawImage(
+          logoImgRef.current,
+          16,
+          16,
+          canvas.width * 0.12,
+          canvas.width * 0.12,
+        );
+        ctx.restore();
       }
 
-      // Draw particles if enabled
+      // Draw particles
       if (particleEffectEnabled) {
         updateAndDrawParticles(vizContext);
       }
 
       // Mirror effect
       if (mirrorEffect && style !== "spiral") {
+        ctx.save();
         ctx.globalAlpha = 0.3;
         ctx.scale(1, -1);
         ctx.translate(0, -canvas.height);
@@ -237,6 +282,7 @@ export function useVisualization(
         ctx.globalAlpha = 1;
         ctx.scale(1, -1);
         ctx.translate(0, canvas.height);
+        ctx.restore();
       }
 
       animationIdRef.current = requestAnimationFrame(animate);
@@ -258,8 +304,12 @@ export function useVisualization(
     particleEffectEnabled,
     mirrorEffect,
     smoothing,
+    fps,
+    customBackground,
+    onBeat,
+    logo,
+    backgroundPalette,
   ]);
 
-  // Expose isBeat as a ref (not state)
   return { isBeat: isBeatRef.current };
 }

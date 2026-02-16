@@ -17,11 +17,14 @@ interface UseAudioContextReturn {
   seekTo: (time: number) => void;
 }
 
-export function useAudioContext(): UseAudioContextReturn {
+export function useAudioContext(): UseAudioContextReturn & {
+  setAudioUrl: (url: string) => void;
+  getWaveformData: () => Float32Array | null;
+} {
   const audioContextRef = useRef<AudioContext | null>(null);
   const audioElementRef = useRef<HTMLAudioElement | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
-  const sourceRef = useRef<MediaElementAudioSource | null>(null);
+  const sourceRef = useRef<MediaElementAudioSourceNode | null>(null);
   const gainNodeRef = useRef<GainNode | null>(null);
   const dataArrayRef = useRef<Uint8Array | null>(null);
 
@@ -29,16 +32,23 @@ export function useAudioContext(): UseAudioContextReturn {
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
 
-  // Initialize audio element (lazy initialize audio context on first play)
+  // Initialize audio element
   useEffect(() => {
-    // Only initialize on client side
     if (typeof window === "undefined") return;
-
-    // Create audio element if not exists
     if (!audioElementRef.current) {
       audioElementRef.current = new Audio();
       audioElementRef.current.crossOrigin = "anonymous";
     }
+  }, []);
+
+  // Cleanup audio context on unmount
+  useEffect(() => {
+    return () => {
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+        audioContextRef.current = null;
+      }
+    };
   }, []);
 
   // Track audio playback
@@ -154,6 +164,21 @@ export function useAudioContext(): UseAudioContextReturn {
     [duration],
   );
 
+  const setAudioUrl = useCallback((url: string) => {
+    const audioElement = audioElementRef.current;
+    if (!audioElement) return;
+    audioElement.src = url;
+    audioElement.load();
+    setCurrentTime(0);
+  }, []);
+
+  const getWaveformData = useCallback(() => {
+    if (!analyserRef.current) return null;
+    const buffer = new Float32Array(analyserRef.current.fftSize);
+    analyserRef.current.getFloatTimeDomainData(buffer);
+    return buffer;
+  }, []);
+
   return {
     audioContext: audioContextRef.current,
     analyser: analyserRef.current,
@@ -169,5 +194,7 @@ export function useAudioContext(): UseAudioContextReturn {
     setVolume,
     setPlaybackRate,
     seekTo,
+    setAudioUrl,
+    getWaveformData,
   };
 }

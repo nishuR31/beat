@@ -68,12 +68,12 @@ export function AudioControlPanel({
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        <label for="audioInput" className="text-sm font-semibold text-white">
+        <label htmlFor="audioInput" className="text-sm font-semibold text-white">
           Audio File
         </label>
         <input
+        title="audiofile"
           id="audioFile"
-          label="audio file"
           ref={fileInputRef}
           type="file"
           accept="audio/*"

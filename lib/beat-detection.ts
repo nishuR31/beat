@@ -5,6 +5,8 @@ export interface BeatDetectorOptions {
     end: number;   // frequency band end (0-255)
   };
   debounceTime: number; // ms to ignore beats after one is detected
+  adaptive?: boolean;   // NEW: adapt sensitivity based on recent energy
+  multiBand?: boolean;  // NEW: detect beats in multiple bands
 }
 
 export class BeatDetector {
@@ -18,69 +20,73 @@ export class BeatDetector {
       sensitivity: options.sensitivity ?? 0.5,
       frequencyRange: options.frequencyRange ?? { start: 0, end: 20 },
       debounceTime: options.debounceTime ?? 100,
+      adaptive: options.adaptive ?? false,
+      multiBand: options.multiBand ?? false,
     };
   }
 
-  /**
-   * Check if a beat is detected based on frequency data
-   */
   detectBeat(dataArray: Uint8Array): boolean {
     const energy = this.calculateEnergy(dataArray);
 
-    // Build history
     this.energyHistory.push(energy);
     if (this.energyHistory.length > this.historySize) {
       this.energyHistory.shift();
     }
 
-    // Need history to detect beat
     if (this.energyHistory.length < 10) {
       return false;
     }
 
-    // Check debounce
     const now = Date.now();
     if (now - this.lastBeatTime < this.options.debounceTime) {
       return false;
     }
 
-    // Calculate average and threshold
-    const average = this.energyHistory.reduce((a, b) => a + b, 0) / this.energyHistory.length;
-    const threshold = average * (1 + (1 - this.options.sensitivity) * 0.5);
+    // Adaptive sensitivity: increase threshold if too many beats recently
+    let sensitivity = this.options.sensitivity;
+    if (this.options.adaptive) {
+      const recentBeats = this.energyHistory.slice(-5).filter(e => e > energy * 0.9).length;
+      sensitivity = Math.max(0.2, sensitivity + recentBeats * 0.05);
+    }
 
-    // Check if current energy exceeds threshold
+    const average = this.energyHistory.reduce((a, b) => a + b, 0) / this.energyHistory.length;
+    const threshold = average * (1 + (1 - sensitivity) * 0.5);
+
     if (energy > threshold) {
       this.lastBeatTime = now;
       return true;
     }
 
+    // Multi-band: detect beats in sub-bands (e.g., bass, mid, treble)
+    if (this.options.multiBand) {
+      const bands = [
+        { start: 0, end: 20 },   // bass
+        { start: 21, end: 80 },  // mid
+        { start: 81, end: 255 }, // treble
+      ];
+      return bands.some(band => {
+        const bandEnergy = this.calculateEnergy(dataArray, band.start, band.end);
+        return bandEnergy > threshold;
+      });
+    }
+
     return false;
   }
 
-  /**
-   * Calculate energy in frequency range
-   */
-  private calculateEnergy(dataArray: Uint8Array): number {
-    const { start, end } = this.options.frequencyRange;
+  private calculateEnergy(dataArray: Uint8Array, start?: number, end?: number): number {
+    const s = start ?? this.options.frequencyRange.start;
+    const e = end ?? this.options.frequencyRange.end;
     let energy = 0;
-
-    for (let i = start; i <= Math.min(end, dataArray.length - 1); i++) {
+    for (let i = s; i <= Math.min(e, dataArray.length - 1); i++) {
       energy += dataArray[i];
     }
-
-    return energy / (end - start + 1);
+    return energy / (e - s + 1);
   }
 
-  /**
-   * Get current energy level (0-1)
-   */
   getCurrentEnergy(dataArray: Uint8Array): number {
     return Math.min(1, this.calculateEnergy(dataArray) / 255);
   }
 
-  /**
-   * Reset detector state
-   */
   reset(): void {
     this.energyHistory = [];
     this.lastBeatTime = 0;
